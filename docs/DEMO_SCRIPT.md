@@ -110,3 +110,4 @@ Standard free Groq accounts have an **8,000 Tokens Per Minute (TPM)** limit. Rap
 3. **Pre-Seeded Data Backup**:
    - The memory bank `recallops-demo` already contains verified pre-retained memories from initial test runs.
    - You can jump directly to **Hindsight Memory Explorer** to demonstrate instant semantic recall against existing memories without triggering another LLM generation.
+

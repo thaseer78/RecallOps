@@ -19,11 +19,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   return (
     <div className="flex min-h-screen bg-slate-950 text-slate-100">
-      <Sidebar hindsightConfigured={status?.hindsight.configured} />
+      <Sidebar hindsightConfigured={status?.hindsight?.configured} />
       <div className="flex-1 flex flex-col min-w-0">
         <Navbar 
-          hindsightConfigured={status?.hindsight.configured} 
-          groqConfigured={status?.groq.configured} 
+          hindsightConfigured={status?.hindsight?.configured} 
+          groqConfigured={status?.groq?.configured} 
         />
         <main className="flex-1 p-6 md:p-8 max-w-7xl mx-auto w-full">
           {children}
@@ -32,4 +32,3 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     </div>
   );
 };
-

@@ -55,11 +55,17 @@ export const MemoryExplorerPage: React.FC = () => {
   useEffect(() => {
     memoryApi.getMemories()
       .then((data) => {
-        setStats(data.stats);
-        setRecentOperations(data.recentOperations);
-        setRetainedLessons(data.retainedLessons);
+        if (data) {
+          setStats(data.stats || null);
+          setRecentOperations(Array.isArray(data.recentOperations) ? data.recentOperations : []);
+          setRetainedLessons(Array.isArray(data.retainedLessons) ? data.retainedLessons : []);
+        }
       })
-      .catch((err) => console.error(err))
+      .catch((err) => {
+        console.error(err);
+        setRecentOperations([]);
+        setRetainedLessons([]);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -82,6 +88,9 @@ export const MemoryExplorerPage: React.FC = () => {
       setRecalling(false);
     }
   };
+
+  const safeRetainedLessons = Array.isArray(retainedLessons) ? retainedLessons : [];
+  const safeRecentOperations = Array.isArray(recentOperations) ? recentOperations : [];
 
   return (
     <div className="space-y-6">
@@ -114,7 +123,7 @@ export const MemoryExplorerPage: React.FC = () => {
             <Brain className="h-4 w-4 text-purple-400" />
           </div>
           <div className="text-2xl font-bold text-slate-100 mt-2">
-            {stats?.successfulRetains ?? retainedLessons.length}
+            {stats?.successfulRetains ?? safeRetainedLessons.length}
           </div>
           <div className="text-[11px] text-purple-400/80 mt-1">Verified incident solutions</div>
         </div>
@@ -241,20 +250,20 @@ export const MemoryExplorerPage: React.FC = () => {
         <div className="flex items-center justify-between">
           <h2 className="text-base font-semibold text-slate-100 flex items-center gap-2">
             <Database className="h-4 w-4 text-purple-400" />
-            Verified Incident Lessons in Knowledge Base ({retainedLessons.length})
+            Verified Incident Lessons in Knowledge Base ({safeRetainedLessons.length})
           </h2>
           <span className="text-xs text-slate-400">
             Source incident links & verified fixes
           </span>
         </div>
 
-        {retainedLessons.length === 0 ? (
+        {safeRetainedLessons.length === 0 ? (
           <div className="p-8 text-center text-xs text-slate-500">
             No lessons retained yet. Resolve an incident to retain your first lesson in Hindsight!
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {retainedLessons.map((lesson) => (
+            {safeRetainedLessons.map((lesson) => (
               <div
                 key={lesson.incidentId}
                 className="p-4 rounded-xl bg-slate-950 border border-purple-900/40 hover:border-purple-800/80 transition-colors space-y-3"
@@ -318,7 +327,14 @@ export const MemoryExplorerPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800">
-              {recentOperations.slice(0, 10).map((op) => (
+              {safeRecentOperations.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-6 text-center text-xs text-slate-500">
+                    No recent memory operations logged.
+                  </td>
+                </tr>
+              ) : (
+                safeRecentOperations.slice(0, 10).map((op) => (
                 <tr key={op.id} className="table-row">
                   <td className="py-2.5 px-3 font-mono">
                     <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
@@ -344,7 +360,7 @@ export const MemoryExplorerPage: React.FC = () => {
                     {new Date(op.createdAt).toLocaleTimeString()}
                   </td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>

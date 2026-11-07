@@ -60,3 +60,4 @@ RecallOps enforces clean separation of concerns:
 - **Interactive Slack / Teams Bot**: Enable war-room triage and resolution confirmation directly within on-call channels.
 - **Automated Post-Mortem Generator**: Produce standardized markdown post-mortem documents and export them directly to GitHub Discussions.
 - **Runbook Drift Detection**: Flag discrepancies between committed runbooks and real-world incident fixes.
+

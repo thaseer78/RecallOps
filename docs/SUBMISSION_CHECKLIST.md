@@ -69,3 +69,4 @@ The following items are handled directly by the user:
    - Follow the step-by-step walkthrough in `docs/DEMO_SCRIPT.md`.
 4. **Hackathon Submission Form**:
    - Submit the GitHub repo URL, Vercel frontend URL, and video link.
+

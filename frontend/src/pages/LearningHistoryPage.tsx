@@ -22,19 +22,42 @@ export const LearningHistoryPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([
+    Promise.allSettled([
       incidentApi.list({ status: 'Resolved' }),
       activityApi.list(),
       memoryApi.getMemories(),
     ])
-      .then(([incRes, actRes, memRes]) => {
-        setIncidents(incRes.data);
-        setActivities(actRes);
-        setRetainedLessons(memRes.retainedLessons);
+      .then(([incSettled, actSettled, memSettled]) => {
+        if (incSettled.status === 'fulfilled' && incSettled.value) {
+          setIncidents(Array.isArray(incSettled.value.data) ? incSettled.value.data : []);
+        } else {
+          setIncidents([]);
+        }
+
+        if (actSettled.status === 'fulfilled' && Array.isArray(actSettled.value)) {
+          setActivities(actSettled.value);
+        } else {
+          setActivities([]);
+        }
+
+        if (memSettled.status === 'fulfilled' && memSettled.value) {
+          setRetainedLessons(Array.isArray(memSettled.value.retainedLessons) ? memSettled.value.retainedLessons : []);
+        } else {
+          setRetainedLessons([]);
+        }
       })
-      .catch((err) => console.error(err))
+      .catch((err) => {
+        console.error(err);
+        setIncidents([]);
+        setActivities([]);
+        setRetainedLessons([]);
+      })
       .finally(() => setLoading(false));
   }, []);
+
+  const safeRetainedLessons = Array.isArray(retainedLessons) ? retainedLessons : [];
+  const safeActivities = Array.isArray(activities) ? activities : [];
+  const safeIncidents = Array.isArray(incidents) ? incidents : [];
 
   return (
     <div className="space-y-6">
@@ -104,7 +127,7 @@ export const LearningHistoryPage: React.FC = () => {
           <div className="flex items-center justify-between border-b border-slate-800 pb-3">
             <h2 className="text-sm font-semibold text-slate-200 uppercase tracking-wider font-mono flex items-center gap-2">
               <Brain className="h-4 w-4 text-purple-400" />
-              Retained Lessons in Persistent Memory ({retainedLessons.length})
+              Retained Lessons in Persistent Memory ({safeRetainedLessons.length})
             </h2>
             <Link to="/investigate" className="text-xs text-blue-400 hover:text-blue-300">
               Run test investigation
@@ -112,12 +135,12 @@ export const LearningHistoryPage: React.FC = () => {
           </div>
 
           <div className="space-y-4">
-            {retainedLessons.length === 0 ? (
+            {safeRetainedLessons.length === 0 ? (
               <p className="text-xs text-slate-500 py-6 text-center">
                 No lessons retained yet.
               </p>
             ) : (
-              retainedLessons.map((item, index) => (
+              safeRetainedLessons.map((item, index) => (
                 <div
                   key={index}
                   className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2.5"
@@ -169,10 +192,10 @@ export const LearningHistoryPage: React.FC = () => {
           </div>
 
           <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
-            {activities.length === 0 ? (
+            {safeActivities.length === 0 ? (
               <p className="text-xs text-slate-500 py-4 text-center">No activity records found.</p>
             ) : (
-              activities.map((act) => (
+              safeActivities.map((act) => (
                 <div
                   key={act.id}
                   className="p-3 rounded-lg bg-slate-950 border border-slate-800/80 text-xs space-y-1"

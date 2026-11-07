@@ -15,15 +15,47 @@ const api = axios.create({
   },
 });
 
+// Interceptor: reject HTML responses (which occur when SPA rewrites intercept API routes)
+api.interceptors.response.use(
+  (response) => {
+    if (
+      typeof response.data === 'string' &&
+      (response.data.trim().startsWith('<!DOCTYPE') ||
+       response.data.trim().startsWith('<!doctype') ||
+       response.data.trim().startsWith('<html'))
+    ) {
+      return Promise.reject(
+        new Error(
+          'RecallOps backend API not reachable. Please set VITE_API_BASE_URL to your backend server URL.'
+        )
+      );
+    }
+    return response;
+  },
+  (error) => Promise.reject(error)
+);
+
 export const incidentApi = {
   list: async (params?: { status?: string; severity?: string; service?: string; limit?: string; offset?: string }) => {
-    const res = await api.get<{ data: Incident[]; total: number }>('/incidents', { params });
-    return res.data;
+    try {
+      const res = await api.get<{ data: Incident[]; total: number }>('/incidents', { params });
+      const items = Array.isArray(res.data?.data) ? res.data.data : [];
+      const total = typeof res.data?.total === 'number' ? res.data.total : items.length;
+      return { data: items, total };
+    } catch (err) {
+      console.warn('incidentApi.list failed:', err);
+      return { data: [], total: 0 };
+    }
   },
 
   get: async (id: string) => {
-    const res = await api.get<{ data: Incident }>('/incidents/' + id);
-    return res.data.data;
+    try {
+      const res = await api.get<{ data: Incident }>('/incidents/' + id);
+      return res.data?.data || null;
+    } catch (err) {
+      console.warn('incidentApi.get failed:', err);
+      return null;
+    }
   },
 
   create: async (data: {
@@ -82,31 +114,55 @@ export const incidentApi = {
 
 export const memoryApi = {
   getMemories: async () => {
-    const res = await api.get<{
-      data: {
-        stats: {
-          totalRetains: number;
-          totalRecalls: number;
-          totalReflects: number;
-          successfulRetains: number;
-          hindsightConfigured: boolean;
-          bankId: string;
+    const defaultStats = {
+      totalRetains: 0,
+      totalRecalls: 0,
+      totalReflects: 0,
+      successfulRetains: 0,
+      hindsightConfigured: false,
+      bankId: 'recallops-demo',
+    };
+
+    try {
+      const res = await api.get<{
+        data: {
+          stats: {
+            totalRetains: number;
+            totalRecalls: number;
+            totalReflects: number;
+            successfulRetains: number;
+            hindsightConfigured: boolean;
+            bankId: string;
+          };
+          recentOperations: MemoryOperation[];
+          retainedLessons: Array<{
+            incidentId: string;
+            incidentTitle: string;
+            service: string;
+            severity: string;
+            actualCause: string;
+            resolution: string;
+            outcome: string;
+            memoryRef: string;
+            resolvedAt: string;
+          }>;
         };
-        recentOperations: MemoryOperation[];
-        retainedLessons: Array<{
-          incidentId: string;
-          incidentTitle: string;
-          service: string;
-          severity: string;
-          actualCause: string;
-          resolution: string;
-          outcome: string;
-          memoryRef: string;
-          resolvedAt: string;
-        }>;
+      }>('/memories');
+
+      const payload = res.data?.data;
+      return {
+        stats: payload?.stats || defaultStats,
+        recentOperations: Array.isArray(payload?.recentOperations) ? payload.recentOperations : [],
+        retainedLessons: Array.isArray(payload?.retainedLessons) ? payload.retainedLessons : [],
       };
-    }>('/memories');
-    return res.data.data;
+    } catch (err) {
+      console.warn('memoryApi.getMemories failed:', err);
+      return {
+        stats: defaultStats,
+        recentOperations: [],
+        retainedLessons: [],
+      };
+    }
   },
 
   recall: async (query: string) => {
@@ -132,14 +188,24 @@ export const memoryApi = {
 
 export const activityApi = {
   list: async () => {
-    const res = await api.get<{ data: ActivityLog[] }>('/activity');
-    return res.data.data;
+    try {
+      const res = await api.get<{ data: ActivityLog[] }>('/activity');
+      return Array.isArray(res.data?.data) ? res.data.data : [];
+    } catch (err) {
+      console.warn('activityApi.list failed:', err);
+      return [];
+    }
   },
 };
 
 export const settingsApi = {
   getStatus: async () => {
-    const res = await api.get<{ data: SettingsStatus }>('/settings/status');
-    return res.data.data;
+    try {
+      const res = await api.get<{ data: SettingsStatus }>('/settings/status');
+      return res.data?.data || null;
+    } catch (err) {
+      console.warn('settingsApi.getStatus failed:', err);
+      return null;
+    }
   },
 };

@@ -72,13 +72,14 @@ export const IncidentsPage: React.FC = () => {
     }
   };
 
-  const filtered = incidents.filter((inc) => {
+  const safeIncidents = Array.isArray(incidents) ? incidents : [];
+  const filtered = safeIncidents.filter((inc) => {
     const matchesSearch = 
-      inc.title.toLowerCase().includes(search.toLowerCase()) ||
-      inc.service.toLowerCase().includes(search.toLowerCase()) ||
-      inc.symptoms.toLowerCase().includes(search.toLowerCase());
-    const matchesSeverity = selectedSeverity === 'all' || inc.severity === selectedSeverity;
-    const matchesStatus = selectedStatus === 'all' || inc.status === selectedStatus;
+      (inc?.title || '').toLowerCase().includes(search.toLowerCase()) ||
+      (inc?.service || '').toLowerCase().includes(search.toLowerCase()) ||
+      (inc?.symptoms || '').toLowerCase().includes(search.toLowerCase());
+    const matchesSeverity = selectedSeverity === 'all' || inc?.severity === selectedSeverity;
+    const matchesStatus = selectedStatus === 'all' || inc?.status === selectedStatus;
     return matchesSearch && matchesSeverity && matchesStatus;
   });
 

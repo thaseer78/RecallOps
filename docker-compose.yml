@@ -24,3 +24,4 @@ services:
 volumes:
   hindsight-data:
     name: hindsight-data
+

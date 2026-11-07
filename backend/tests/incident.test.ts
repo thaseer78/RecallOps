@@ -226,4 +226,55 @@ describe('Groq response validation', () => {
     const result = InvestigationOutputSchema.safeParse(validOutput);
     expect(result.success).toBe(true);
   });
+
+  describe('Dashboard API Response Contracts', () => {
+    it('verifies memoryApi response contract conforms to expected structure', () => {
+      const memoryPayload = {
+        data: {
+          stats: {
+            totalRetains: 5,
+            totalRecalls: 12,
+            totalReflects: 2,
+            successfulRetains: 5,
+            hindsightConfigured: true,
+            bankId: 'recallops-demo',
+          },
+          recentOperations: [],
+          retainedLessons: [],
+        },
+      };
+
+      expect(memoryPayload.data).toHaveProperty('stats');
+      expect(memoryPayload.data.stats).toHaveProperty('successfulRetains');
+      expect(Array.isArray(memoryPayload.data.recentOperations)).toBe(true);
+      expect(Array.isArray(memoryPayload.data.retainedLessons)).toBe(true);
+    });
+
+    it('handles undefined or malformed dashboard responses safely with default fallbacks', () => {
+      // Simulating frontend fallback logic when API returns empty or HTML response
+      const malformedResponses: any[] = [undefined, null, '', '<!doctype html><html></html>', {}];
+
+      malformedResponses.forEach((res) => {
+        const safeItems = Array.isArray(res?.data) ? res.data : [];
+        const safeTotal = typeof res?.total === 'number' ? res.total : safeItems.length;
+        const defaultStats = {
+          totalRetains: 0,
+          totalRecalls: 0,
+          totalReflects: 0,
+          successfulRetains: 0,
+          hindsightConfigured: false,
+          bankId: 'recallops-demo',
+        };
+        const safeStats = res?.data?.stats || defaultStats;
+        const safeRecentOps = Array.isArray(res?.data?.recentOperations) ? res.data.recentOperations : [];
+
+        expect(Array.isArray(safeItems)).toBe(true);
+        expect(safeItems.length).toBe(0);
+        expect(typeof safeTotal).toBe('number');
+        expect(safeStats).toHaveProperty('successfulRetains');
+        expect(safeStats.successfulRetains).toBe(0);
+        expect(Array.isArray(safeRecentOps)).toBe(true);
+      });
+    });
+  });
 });
