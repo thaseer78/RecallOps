@@ -17,7 +17,18 @@ const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 // Security & parsing middleware
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors({
-  origin: [FRONTEND_URL, 'http://localhost:5173', 'http://localhost:3000'],
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (
+      origin === FRONTEND_URL ||
+      origin.includes('localhost') ||
+      origin.endsWith('.vercel.app') ||
+      origin.includes('recall-ops')
+    ) {
+      return callback(null, true);
+    }
+    return callback(null, true);
+  },
   credentials: true,
 }));
 app.use(express.json({ limit: '2mb' }));

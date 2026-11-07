@@ -4,6 +4,22 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+      "source": "/api/settings/status",
+      "destination": "/api/settings"
+    },
+    {
+      "source": "/api/memories/recall",
+      "destination": "/api/memories"
+    },
+    {
+      "source": "/api/memories/retain",
+      "destination": "/api/memories"
+    },
+    {
+      "source": "/api/incidents/:id*",
+      "destination": "/api/incidents?id=:id*"
+    },
+    {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
