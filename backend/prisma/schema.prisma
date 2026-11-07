@@ -1,0 +1,86 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Incident {
+  id          String   @id @default(cuid())
+  title       String
+  service     String
+  severity    String   // Critical, High, Medium, Low
+  status      String   // Open, Investigating, Resolved
+  symptoms    String
+  logs        String   @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isSynthetic Boolean  @default(false)
+
+  investigations Investigation[]
+  resolution     Resolution?
+  activityLog    ActivityLog[]
+}
+
+model Investigation {
+  id              String   @id @default(cuid())
+  incidentId      String
+  summary         String
+  rootCauses      String   // JSON array
+  evidence        String   // JSON array
+  similarIncidents String  // JSON array
+  steps           String   // JSON array
+  remediation     String   // JSON array
+  confidence      Float
+  confidenceReason String
+  safetyWarnings  String   // JSON array
+  hindsightUsed   Boolean  @default(false)
+  memoryCount     Int      @default(0)
+  rawMemories     String   @default("[]") // JSON
+  createdAt       DateTime @default(now())
+
+  incident Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+}
+
+model Resolution {
+  id              String   @id @default(cuid())
+  incidentId      String   @unique
+  proposedCause   String
+  actualCause     String
+  resolution      String
+  outcome         String
+  hindsightRetained Boolean @default(false)
+  hindsightMemoryRef String @default("")
+  resolvedAt      DateTime @default(now())
+
+  incident Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+}
+
+model MemoryOperation {
+  id          String   @id @default(cuid())
+  operation   String   // retain | recall | reflect
+  bankId      String
+  query       String   @default("")
+  content     String   @default("")
+  incidentId  String   @default("")
+  resultCount Int      @default(0)
+  success     Boolean  @default(true)
+  errorMsg    String   @default("")
+  createdAt   DateTime @default(now())
+}
+
+model ActivityLog {
+  id         String   @id @default(cuid())
+  type       String   // incident_created | investigation_started | resolution_confirmed | memory_retained | memory_recalled
+  incidentId String?
+  message    String
+  metadata   String   @default("{}") // JSON
+  createdAt  DateTime @default(now())
+
+  incident Incident? @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+}
